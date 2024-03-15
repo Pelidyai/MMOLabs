@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+import seaborn as sms
 
 from support.types import DataSet
 
@@ -18,3 +19,6 @@ def plot_data_set(data_set: DataSet, colors: list = None):
             subplots[i][j].set_xlabel(first_name)
             subplots[i][j].set_ylabel(second_name)
     plt.show()
+    sms.heatmap(data_frame.corr(), annot=True)
+    plt.show()
+

@@ -1,8 +1,8 @@
 from typing import Callable, Any
 
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, f1_score
 
-from support.models_base import ModelEnvironment
+from support.models_base import ModelEnvironment, IModel
 from support.types import DataSet
 
 
@@ -11,7 +11,7 @@ class ClassificationScore:
         y_predicted = self.predict(x)
         return error_func(y_target, y_predicted)
 
-    def __init__(self, model=None, x=None, y=None):
+    def __init__(self, model: IModel = None, x=None, y=None):
         self.__model = model
         self.accuracy = None
         self.precision = None
@@ -24,20 +24,26 @@ class ClassificationScore:
                                                                                          average='weighted'))
         self.recall = self.calc_classification_error(x, y,
                                                      lambda y_t, y_p: recall_score(y_t, y_p, average='weighted'))
+        self.f1_score = self.calc_classification_error(x, y,
+                                                       lambda y_t, y_p: f1_score(y_t, y_p, average='weighted'))
+        self.confusion_matrix = self.calc_classification_error(x, y,
+                                                               lambda y_t, y_p: confusion_matrix(y_t, y_p))
 
     def __str__(self):
         if self.accuracy is None:
             return "Not calculated"
         return (f'Accuracy - {round(self.accuracy, 3)}, '
                 f'Precision - {round(self.precision, 3)}, '
-                f'Recall - {round(self.recall, 3)}')
+                f'Recall - {round(self.recall, 3)}, '
+                f'F1 score - {round(self.f1_score, 3)} \n'
+                f'Confusion matrix:\n{self.confusion_matrix}')
 
     def predict(self, x) -> Any:
         return self.__model.predict(x)
 
 
 class ClassifierModelEnvironment(ModelEnvironment):
-    def __init__(self, model, data_set: DataSet, test_size=0.2, shuffle=True, random_state=None):
+    def __init__(self, model: IModel, data_set: DataSet, test_size=0.2, shuffle=True, random_state=None):
         super().__init__(model, data_set, test_size, shuffle, random_state)
         self.train_score: ClassificationScore = ClassificationScore()
         self.test_score: ClassificationScore = ClassificationScore()

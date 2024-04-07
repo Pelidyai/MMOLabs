@@ -1,5 +1,6 @@
 from typing import Callable, Any
 
+import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, f1_score
 
 from support.models_base import ModelEnvironment, IModel
@@ -11,21 +12,27 @@ class ClassificationScore:
         y_predicted = self.predict(x)
         return error_func(y_target, y_predicted)
 
-    def __init__(self, model: IModel = None, x=None, y=None):
+    def __init__(self, model: IModel = None, x: np.ndarray = None, y: np.ndarray = None):
         self.__model = model
         self.accuracy = None
         self.precision = None
         self.recall = None
         if model is None or x is None or y is None:
             return
+        if len(y.shape) > 1:
+            y = np.argmax(y, axis=-1)
+
         self.accuracy = self.calc_classification_error(x, y, accuracy_score)
         self.precision = self.calc_classification_error(x, y,
                                                         lambda y_t, y_p: precision_score(y_t, y_p,
-                                                                                         average='weighted'))
+                                                                                         average='weighted',
+                                                                                         zero_division=1.0))
         self.recall = self.calc_classification_error(x, y,
                                                      lambda y_t, y_p: recall_score(y_t, y_p, average='weighted'))
         self.f1_score = self.calc_classification_error(x, y,
-                                                       lambda y_t, y_p: f1_score(y_t, y_p, average='weighted'))
+                                                       lambda y_t, y_p: f1_score(y_t, y_p,
+                                                                                 average='weighted',
+                                                                                 zero_division=1.0))
         self.confusion_matrix = self.calc_classification_error(x, y,
                                                                lambda y_t, y_p: confusion_matrix(y_t, y_p))
 
